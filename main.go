@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"strings"
 )
@@ -38,8 +39,15 @@ func deleteKey(client redis.Client, key string) {
 	var cursor uint64
 
 	iter := client.Scan(context.TODO(), cursor, key, 0).Iterator()
+
+	logCount := 0
 	for iter.Next(ctx) {
 		client.Unlink(ctx, iter.Val())
+		if logCount > 1000 {
+			logCount = 0
+			fmt.Printf("key %s deleted")
+		}
+		logCount++
 	}
 	if err := iter.Err(); err != nil {
 		panic(err)
