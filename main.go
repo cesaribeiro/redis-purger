@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/go-redis/redis/v8"
 	"strings"
 )
@@ -14,7 +13,6 @@ func main() {
 	args.validateArgs()
 
 	if *args.cluster {
-		fmt.Printf("Connected to cluster! \n")
 		clusterClient := redis.NewClusterClient(&redis.ClusterOptions{
 			Addrs: strings.Split(*args.hosts, ";"),
 		})
@@ -28,7 +26,6 @@ func main() {
 
 func deleteKeyCluster(clusterClient redis.ClusterClient, key string) {
 	err := clusterClient.ForEachMaster(ctx, func(ctx context.Context, client *redis.Client) error {
-		fmt.Printf("Connected to the %s node \n", client.Options().Addr)
 		deleteKey(*client, key)
 		return nil
 	})
@@ -42,14 +39,8 @@ func deleteKey(client redis.Client, key string) {
 
 	iter := client.Scan(context.TODO(), cursor, key, 0).Iterator()
 
-	logCount := 0
 	for iter.Next(ctx) {
 		client.Unlink(ctx, iter.Val())
-		if logCount > 100 {
-			logCount = 0
-			fmt.Printf("Info: Key %s deleted \n", iter.Val())
-		}
-		logCount++
 	}
 	if err := iter.Err(); err != nil {
 		panic(err)
